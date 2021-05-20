@@ -3,7 +3,6 @@ import html
 import json
 import os
 import re
-import sys
 import zlib
 
 import backoff
@@ -11,46 +10,42 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
+catalogs = ["4453"]
+
 
 def main():
-    data = inputdata()
-    if data:
-        print("input rows: {}".format(len(data)), file=sys.stderr)
-
-    csvout = csv.writer(sys.stdout)
-    csvout.writerow(["id", "name", "desc", "url", "type"])
-    for (id, name, desc, url, type) in crawl(data):
-        csvout.writerow([id, name, desc, url, type])
-        sys.stdout.flush()
-
-
-def inputdata():
-    if len(sys.argv) == 1:
-        return {}
-    elif sys.argv[1] == "-":
-        file = sys.stdin
-    else:
-        file = open(sys.argv[1], "r")
-
     data = {}
-    for row in csv.reader(file):
-        if not row:
-            break
-        (id, name, desc, url, type) = row
-        if id == "id":
-            continue
-        data[id] = (id, name, desc, url, type)
+    files = {}
+    csvwriters = {}
 
-    file.close()
-    return data
+    for catalog_id in catalogs:
+        with open("{}.csv".format(catalog_id), "r") as f:
+            for (id, name, desc, url, type) in csv.reader(f):
+                if id == "id":
+                    continue
+                data[id] = (catalog_id, id, name, desc, url, type)
+
+    for catalog_id in catalogs:
+        files[catalog_id] = open("{}.csv".format(catalog_id), "w")
+        csvwriters[catalog_id] = csv.writer(files[catalog_id])
+        csvwriters[catalog_id].writerow(["id", "name", "desc", "url", "type"])
+
+    for (catalog_id, id, name, desc, url, type) in crawl(data):
+        csvwriters[catalog_id].writerow([id, name, desc, url, type])
+
+    for catalog_id in catalogs:
+        files[catalog_id].close()
 
 
 def crawl(data={}):
     for url in sitemap():
-        m = re.match(r"https://tv.apple.com/us/movie/([^/]+/)?(umc.cmc.[0-9a-z]+)", url)
+        m = re.match(
+            r"https://tv.apple.com/us/(movie)/([^/]+/)?(umc.cmc.[0-9a-z]+)", url
+        )
         if not m:
             continue
-        id = m.group(2)
+        type = m.group(1)
+        id = m.group(3)
 
         if id in data:
             yield data[id]
@@ -77,7 +72,7 @@ def crawl(data={}):
 
         type = "Q11424"
 
-        yield (id, name, desc, url, type)
+        yield ("4453", id, name, desc, url, type)
 
 
 def sitemap():
