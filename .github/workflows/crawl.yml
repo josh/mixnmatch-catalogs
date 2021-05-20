@@ -26,7 +26,7 @@ jobs:
         run: |
           python crawl_appletv.py
 
-      - name: Commit formula changes
+      - name: Commit changes
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'joshbot@users.noreply.github.com'
