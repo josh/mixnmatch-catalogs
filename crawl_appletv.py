@@ -14,30 +14,30 @@ catalogs = ["4453"]
 
 
 def main():
-    data = {}
-    files = {}
-    csvwriters = {}
+    cache = {}
+    rows = {}
 
     for catalog_id in catalogs:
+        rows[catalog_id] = []
         with open("{}.csv".format(catalog_id), "r") as f:
             for (id, name, desc, url, type) in csv.reader(f):
                 if id == "id":
                     continue
-                data[id] = (catalog_id, id, name, desc, url, type)
+                cache[id] = (catalog_id, id, name, desc, url, type)
+
+    for (catalog_id, id, name, desc, url, type) in crawl(cache):
+        rows[catalog_id].append([id, name, desc, url, type])
 
     for catalog_id in catalogs:
-        files[catalog_id] = open("{}.csv".format(catalog_id), "w")
-        csvwriters[catalog_id] = csv.writer(files[catalog_id])
-        csvwriters[catalog_id].writerow(["id", "name", "desc", "url", "type"])
-
-    for (catalog_id, id, name, desc, url, type) in crawl(data):
-        csvwriters[catalog_id].writerow([id, name, desc, url, type])
-
-    for catalog_id in catalogs:
-        files[catalog_id].close()
+        with open("{}.csv".format(catalog_id), "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["id", "name", "desc", "url", "type"])
+            rows[catalog_id].sort()
+            for row in rows[catalog_id]:
+                writer.writerow(row)
 
 
-def crawl(data={}):
+def crawl(cache={}):
     for url in sitemap():
         m = re.match(
             r"https://tv.apple.com/us/(movie)/([^/]+/)?(umc.cmc.[0-9a-z]+)", url
@@ -47,8 +47,8 @@ def crawl(data={}):
         type = m.group(1)
         id = m.group(3)
 
-        if id in data:
-            yield data[id]
+        if id in cache:
+            yield cache[id]
             continue
 
         text = fetch(url)
