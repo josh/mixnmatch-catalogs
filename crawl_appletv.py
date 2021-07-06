@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-catalogs = ["4453"]
+catalogs = ["4453", "0000"]
 
 
 def main():
@@ -40,10 +40,11 @@ def main():
 def crawl(cache={}):
     for url in sitemap():
         m = re.match(
-            r"https://tv.apple.com/us/(movie)/([^/]+/)?(umc.cmc.[0-9a-z]+)", url
+            r"https://tv.apple.com/us/(movie|show)/([^/]+/)?(umc.cmc.[0-9a-z]+)", url
         )
         if not m:
             continue
+
         type = m.group(1)
         id = m.group(3)
 
@@ -55,24 +56,35 @@ def crawl(cache={}):
         soup = BeautifulSoup(text, "html.parser")
 
         for script in soup.find_all("script", {"type": "application/ld+json"}):
-            ld = json.loads(script.string)
+            possible_ld = json.loads(script.string)
+            if possible_ld["@type"] in {"Movie", "TVSeries"}:
+                ld = possible_ld
         if not ld:
             continue
 
         name = html.unescape(ld["name"])
-        desc = "film"
 
-        if "datePublished" in ld:
-            year = ld["datePublished"][0:4]
-            desc = "{} film".format(year)
+        if type == "show":
+            type = "Q5398426"
+            desc = "television series"
 
-        if "director" in ld:
-            director = " and ".join([html.unescape(p["name"]) for p in ld["director"]])
-            desc += " directed by {}".format(director)
+            yield ("0000", id, name, desc, url, type)
 
-        type = "Q11424"
+        elif type == "movie":
+            type = "Q11424"
+            desc = "film"
 
-        yield ("4453", id, name, desc, url, type)
+            if "datePublished" in ld:
+                year = ld["datePublished"][0:4]
+                desc = "{} film".format(year)
+
+            if "director" in ld:
+                director = " and ".join(
+                    [html.unescape(p["name"]) for p in ld["director"]]
+                )
+                desc += " directed by {}".format(director)
+
+            yield ("4453", id, name, desc, url, type)
 
 
 def sitemap():
