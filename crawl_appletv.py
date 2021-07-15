@@ -55,6 +55,7 @@ def crawl(cache={}):
         text = fetch(url)
         soup = BeautifulSoup(text, "html.parser")
 
+        ld = None
         for script in soup.find_all("script", {"type": "application/ld+json"}):
             possible_ld = json.loads(script.string)
             if possible_ld["@type"] in {"Movie", "TVSeries"}:
