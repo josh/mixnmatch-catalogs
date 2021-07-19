@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-catalogs = ["4453", "0000"]
+catalogs = ["404", "4453", "0000"]
 
 
 def main():
@@ -61,6 +61,7 @@ def crawl(cache={}):
             if possible_ld["@type"] in {"Movie", "TVSeries"}:
                 ld = possible_ld
         if not ld:
+            yield ("404", id, "", "", url, "")
             continue
 
         name = html.unescape(ld["name"])
