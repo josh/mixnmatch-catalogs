@@ -102,7 +102,7 @@ def sitemap():
         soup = BeautifulSoup(xml, "lxml")
 
         filename = os.path.basename(loc.text)
-        for loc in tqdm(soup.find_all("loc"), desc=filename):
+        for loc in tqdm(soup.find_all("loc"), desc=filename, disable=os.getenv("CI")):
             yield loc.text
 
 
