@@ -1,5 +1,5 @@
 backoff==1.11.1
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
 lxml==4.6.5
 requests==2.27.1
 tqdm==4.62.3
